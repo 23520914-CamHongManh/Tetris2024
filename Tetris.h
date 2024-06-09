@@ -6,13 +6,16 @@
 #define switchmusic 3
 #include "Util.h"
 #include "Tetrimino.cpp"
-
+    typedef struct 
+    {
+        int x, y;
+    }point;
 class Tetris
 {
 private:
     enum{blockW = 30, blockH = 30};
     enum{line = 20, col = 10};
-    SDL_Texture *background = NULL, *block = NULL, *score_frame = NULL;
+    SDL_Texture *background = NULL, *block = NULL;
     SDL_Texture* backgroundMenu = NULL;
     SDL_Texture* play = NULL;
     SDL_Texture* play_light = NULL;
@@ -39,6 +42,12 @@ private:
     SDL_Texture* pauseb=NULL;
     SDL_Texture* playa=NULL;
     SDL_Texture* pausebg=NULL;
+    SDL_Texture* replay=NULL;
+    SDL_Texture* remenu=NULL;
+    SDL_Texture* explode=NULL;
+    SDL_Texture* nameframe=NULL;
+    SDL_Texture* cup=NULL;
+    SDL_Texture* name=NULL;
     SDL_Rect sRect = {0, 0, 10, 10}, dRect = {0, 0, blockW, blockH};
     // SDL_Rect dRect_score_frame = {5, 5, blockW*4, blockH*4};
     SDL_Rect sRectbg={0,0,320,640};
@@ -49,8 +58,8 @@ private:
     SDL_Rect sRectbd1={0,0,20,440};
     SDL_Rect dRectbd1={10,SCREEN_HEIGHT - (line + 1)*blockH,20,blockH*21-10};
     SDL_Rect dRectbd1f={blockW*11,SCREEN_HEIGHT - (line + 1)*blockH,20,blockH*21-10};
-    SDL_Rect playRect = {250, 260, 94, 53};
-    SDL_Rect levelRect = {300, 350, 174, 53};
+    SDL_Rect playRect = {250, 263, 94, 53};
+    SDL_Rect levelRect = {300, 351, 174, 53};
     SDL_Rect sRectmu = {0, 0, 32, 32};
     // 	TextureManager::SetPos(pos_menu[MUSIC], Vector2D(42, 15), Vector2D(32, 32)); 
     SDL_Rect dRectmu = {20, 20, 40, 40};
@@ -68,10 +77,12 @@ private:
     SDL_Rect dRecths1 = {0, 0, 0, 0};
     SDL_Rect dpause={blockW*13, 20 , 55, 55};
     SDL_Rect dplay={200,250,200,200};
-    //     const int playRect_x = 250;
-    // const int playRect_y = 260;
-    // const int levelRect_x = 300;
-    // const int levelRect_y = 350;
+    SDL_Rect dreplay={100,500,150,150};
+    SDL_Rect dremenu={350,500,150,150};
+    SDL_Rect dexplode={0,0,0,0};
+    SDL_Rect dnamef={320, 170, 196, 56};
+    SDL_Rect dname={0,0,0,0};
+    SDL_Rect dcup={520, 590, 70, 70};
     bool Checkmouse[4]={0,0,0,0};
     bool running = false;
     int level = 1;
@@ -79,20 +90,17 @@ private:
     int highestscore=0;
     int highestscore1=0;
     int a[3];
-    int field[line][col] = {{0}};
-    // static const int figure[7][4];
-    typedef struct 
-    {
-        int x, y;
-    }point;
+    int field[line+1][col] = {{0}};
     point backup[4];
     point temp[2][4];
     Tetrimino **ter;
     unsigned int delay = 0;
-    bool rotate = false;
+    bool rotatel = false;
+    bool rotater = false;
     int move = 0;
     Uint32 currentTime = 0, lastTime = 0;
     int color[2] = {1,1};
+    string namep="Your name...";
     //  theme_music; 
 public:
     Tetris() {ter=new Tetrimino*[2];}
@@ -113,7 +121,10 @@ public:
     void clean1();
     void SetupGame();
     void setCurrentTime(Uint32 t);
+    void fixcollision();
     bool collision();
+    bool collision1();
+    bool collision2();
     void nextTetromino();
     void updateRenderer();
     void updateField(SDL_Rect &rect, const int x, const int y);
@@ -121,8 +132,10 @@ public:
     void gameOver();
     void reset();
     void updatetemp();
-    // void makegame();
-    // void MouseGame();
+    void renderexplode(int n);
+    void renderstartgame();
+    int endgame();
+    void rendername();
 };
 // int a=1;
 // #define SDL_CreateThread(Tetris::MouseGame(), "EventThread", (void*)a)  threadID

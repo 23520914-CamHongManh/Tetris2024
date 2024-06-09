@@ -33,7 +33,7 @@ public:
     void waitUntilKeyPressed();
     SDL_Texture *loadTexture(string path, SDL_Renderer *renderer);
     void backgroundAudio(const char* nameSong, const int vol);
-    void effectAudio(const char* nameSong);
+    void effectAudio(const char* nameSong,int vol);
     SDL_Texture* Text(string text, int x, int y, SDL_Renderer* renderer, SDL_Color color,int size,SDL_Rect &dRect);
 	bool isPlaying();
 	void pause();

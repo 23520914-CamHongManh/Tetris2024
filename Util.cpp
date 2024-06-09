@@ -77,7 +77,7 @@ void util::backgroundAudio(const char* nameSong,const int vol)
         Mix_PlayMusic(music, -1);
 }
 
-void util::effectAudio(const char* nameSong)
+void util::effectAudio(const char* nameSong,int vol)
 {
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) == -1)
 	{
@@ -88,6 +88,7 @@ void util::effectAudio(const char* nameSong)
 	{
 		cout<< Mix_GetError();
 	}
+    Mix_Volume(-1,vol);
 	if (!Mix_Playing(-1))
         Mix_PlayChannel(-1, chunk, 0);
 }

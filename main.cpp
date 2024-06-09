@@ -28,7 +28,9 @@ int main(int argc, char* argv[])
         if (i == 0) {
 			//exit
             tetris->clean1();
+		game:
             tetris->SetupGame();
+			tetris->renderstartgame();
 			// SDL_Thread* thread;
 			while(tetris -> isRunning())
          {
@@ -41,18 +43,21 @@ int main(int argc, char* argv[])
             tetris->checkline();
             tetris->gameOver();
          }
-		//  int threadResult;
-        // SDL_WaitThread(thread, &threadResult);
-        tetris->clean();
-         tetris->reset();
-         goto Home;
+		tetris->reset();
+		int check=tetris->endgame();
+		if(check) goto game;
+		else{
+				tetris->clean();
+         		goto Home;
+		}
+
         }
 		else if (i == 1) {
 			//game instruction
             tetris->clean1();
             SDL_Event e;
 			SDL_Texture* infor_text; 
-			infor_text = tetris->Util.loadTexture("res/gfx/Background/infor_text.png",tetris->Util.renderer); 
+			infor_text = tetris->Util.loadTexture("res/demo image/INFOR-MINECRAFT.png",tetris->Util.renderer); 
 			while (true) {
 				SDL_RenderCopy(tetris->Util.renderer, infor_text, NULL, NULL); 
 				SDL_RenderPresent(tetris->Util.renderer); 
