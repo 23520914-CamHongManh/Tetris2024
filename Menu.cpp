@@ -15,6 +15,20 @@ void Tetris::menu()
     infor = Util.loadTexture("res/gfx/Button/information.png",Util.renderer);
 	nameframe=Util.loadTexture("res/demo image/nameframe.png",Util.renderer);
 	cup=Util.loadTexture("res/demo image/cup.png",Util.renderer);
+	recordboard=Util.loadTexture("res/demo image/bgrecord.png",Util.renderer);
+	cupdark=Util.loadTexture("res/demo image/cupblack.png",Util.renderer);
+	ifstream p;
+	string c;
+	p.open("Highestscore.txt");
+    if(!p) cerr<<"Can't open file"<<endl;
+	for(int i=0;i<3;i++)
+            {
+                p>>a[i];
+				 getline(p,c);
+				getline(p,recordname[i]);
+            }
+			
+    p.close();
 }
 int Tetris::showmenu() {
     while (true) {
@@ -22,6 +36,8 @@ int Tetris::showmenu() {
     SDL_RenderCopy(Util.renderer, backgroundMenu, NULL, NULL);
     if(!Checkmouse[playgame]) SDL_RenderCopy(Util.renderer, play, NULL, &playRect);
     else SDL_RenderCopy(Util.renderer, play_light, NULL, &playRect);
+	if(!Checkmouse[cupblack]) SDL_RenderCopy(Util.renderer, cup, NULL, &dcup);
+    else SDL_RenderCopy(Util.renderer, cupdark, NULL, &dcup);
     SDL_RenderCopy(Util.renderer, music, &sRectmu, &dRectmu);
     SDL_RenderCopy(Util.renderer, infor, &sRectin, &dRectin);
     if(level == 1)
@@ -37,34 +53,17 @@ int Tetris::showmenu() {
         SDL_RenderCopy(Util.renderer, lv3, NULL, &levelRect);
     }
     SDL_RenderCopy(Util.renderer, nameframe, NULL, &dnamef);
-	name=Util.Text(namep,335,180,Util.renderer,{0,0,0},30,dname);
+	name=Util.Text(namep,332,185,Util.renderer,"res/font/Pixellettersfull-BnJ5.ttf",{0,0,0},30,dname);
 	SDL_RenderCopy(Util.renderer, name, NULL, &dname);
-	SDL_RenderCopy(Util.renderer, cup, NULL, &dcup);
+	SDL_DestroyTexture(name);
 	SDL_RenderPresent(Util.renderer);
-	// 	SDL_RenderCopy(Game::renderer, menu, NULL, NULL);
-	// 	SDL_RenderCopy(Game::renderer, play, &src_menu[PLAY_GAME], &pos_menu[PLAY_GAME]); 
-	// 	SDL_RenderCopy(Game::renderer, exit, &src_menu[EXIT], &pos_menu[EXIT]); 
-	// 	SDL_RenderCopy(Game::renderer, infor, &src_menu[INFOR], &pos_menu[INFOR]);
-	// 	SDL_RenderCopy(Game::renderer, credits, &src_menu[CREDITS], &pos_menu[CREDITS]);
-	// 	SDL_RenderCopy(Game::renderer, music, &src_menu[MUSIC], &pos_menu[MUSIC]);
-	// 	SDL_RenderPresent(Game::renderer);
     SDL_Event e;
 		while (SDL_PollEvent(&e)) {
             		int xm ;
 					int ym ;
 			switch(e.type) {
 				case SDL_QUIT: 
-                    // SDL_DestroyTexture(background);
-                    // SDL_DestroyTexture(gamebg);
-                    // SDL_DestroyTexture(block);
-                    SDL_DestroyTexture(backgroundMenu);
-                    SDL_DestroyTexture(play);
-                    SDL_DestroyTexture(play_light);
-                    SDL_DestroyTexture(lv1);
-                    SDL_DestroyTexture(lv2);
-                    SDL_DestroyTexture(lv3);
-                    SDL_DestroyTexture(music);
-                    SDL_DestroyTexture(infor);
+                    clean1();
 					return 10;   
 				case SDL_MOUSEMOTION: 
 					xm = e.motion.x; 
@@ -79,7 +78,16 @@ int Tetris::showmenu() {
 							Checkmouse[playgame] = 0; 
 						}
 					}
-
+					if (selectRect(dcup,xm,ym)) {
+						if (!Checkmouse[cupblack]) {
+							Checkmouse[cupblack] = 1; 
+						}
+					}
+					else {
+						if (Checkmouse[cupblack]) {
+							Checkmouse[cupblack] = 0; 
+						}
+					}
 					if (selectRect(dRectin ,xm,ym)) {
 						if (!Checkmouse[inforcheck]) {
 							Checkmouse[inforcheck] = 1; 
@@ -106,33 +114,11 @@ int Tetris::showmenu() {
 						return 1; 
 					}
 					if (selectRect(dnamef,xm,ym)) { 
-						// SDL_StartTextInput(); // Bắt đầu chế độ nhập văn bản
-						// // while (1) {
-						// 	SDL_Event event;
-						// 	while (SDL_WaitEvent(&event)) {
-						// 		if (event.type == SDL_QUIT) break;
-						// 		else if (event.type == SDL_TEXTINPUT)
-						// 			// Xử lý văn bản nhập vào
-						// 			{namep+=event.text.text;
-						// 			SDL_RenderCopy(Util.renderer, name, NULL, &dname);
-						// 			SDL_RenderPresent(Util.renderer);
-						// 			}
-						// 		else if (event.type == SDL_TEXTEDITING) 
-						// 			{namep=event.text.text;
-						// 			SDL_RenderCopy(Util.renderer, name, NULL, &dname);
-						// 			SDL_RenderPresent(Util.renderer);
-						// 			}
-						// 		else if(event.type==SDL_KEYDOWN)
-						// 		{
-						// 			// if(event.key.keysym.sym==SDLK_KP_ENTER) break;
-						// 			 if(event.key.keysym.sym==SDLK_ESCAPE) break;
-						// 		}
-						// 	}
-						// // }
-
-						// SDL_StopTextInput(); // Kết thúc chế độ nhập văn bản
-						// // return 9;
+						Util.effectAudio("res/audio/music/maylaai.wav",90);
 						rendername();
+					}
+					if (selectRect(dcup,xm,ym)) { 
+						return 2;
 					}
                     if(selectRect(levelRect, xm, ym))
                     {
@@ -172,8 +158,12 @@ void Tetris::rendername()
 {
 	SDL_StartTextInput(); 
 	// Bắt đầu chế độ nhập văn bản
+	Uint32 start,end;
+	bool point;
+	int delaypoint=500;
 						while (1) {
 							SDL_Event event;
+							start=SDL_GetTicks();
 							SDL_RenderClear(Util.renderer);
 									SDL_RenderCopy(Util.renderer, backgroundMenu, NULL, NULL);
 									if(!Checkmouse[playgame]) SDL_RenderCopy(Util.renderer, play, NULL, &playRect);
@@ -193,30 +183,151 @@ void Tetris::rendername()
 										SDL_RenderCopy(Util.renderer, lv3, NULL, &levelRect);
 									}
 									SDL_RenderCopy(Util.renderer, nameframe, NULL, &dnamef);
-									name=Util.Text(namep,335,180,Util.renderer,{0,0,0},30,dname);
+									name=Util.Text(namep,332,185,Util.renderer,"res/font/Pixellettersfull-BnJ5.ttf",{0,0,0},30,dname);
 									SDL_RenderCopy(Util.renderer, name, NULL, &dname);
+									SDL_DestroyTexture(name);
 									SDL_RenderCopy(Util.renderer, cup, NULL, &dcup);
 									SDL_RenderPresent(Util.renderer);
 							while (SDL_PollEvent(&event)) {
 								if (event.type == SDL_QUIT) return;
 								else if (event.type == SDL_TEXTINPUT)
 									// Xử lý văn bản nhập vào
-									{namep+=event.text.text;
-									name=Util.Text(namep,335,180,Util.renderer,{0,0,0},30,dname);
+									{
+										if(namep.length()<=15)
+										{
+																					if(point)
+										{
+											namep.pop_back();
+											namep+=event.text.text;
+											namep+='|';
+										}
+										else namep+=event.text.text;
+										}
 									}
 								else if (event.type == SDL_KEYDOWN) 
 									{
-										if(event.key.keysym.sym==SDLK_BACKSPACE&&!namep.empty())
+										if(event.key.keysym.sym==SDLK_BACKSPACE)
 										{
-											namep.pop_back();
+											if(point)
+											{
+												if(namep.length()>1)
+												{
+													namep.pop_back();
+												namep.pop_back();
+												namep+='|';
+												}
+											}
+											else 
+											{
+												if(!namep.empty()) namep.pop_back();
+											}
 										}
-										// else if(event.key.keysym.sym==SDLK_) return;
 									 else if(event.key.keysym.sym==SDLK_ESCAPE) return;
 									}
-								else if(event.type==SDL_MOUSEBUTTONDOWN) return;
+								else if(event.type==SDL_MOUSEBUTTONDOWN) 
+								{
+									if(point) namep.pop_back();
+									return;
+								}
+							}
+							if(start-end>=delaypoint)
+							{
+								end=start;
+								if(point)
+								{
+									point=0;
+									namep.pop_back();
+								}
+								else{
+									point=1;
+									namep+='|';
+								}
 							}
 						}
 
 						SDL_StopTextInput(); // Kết thúc chế độ nhập văn bản
-						// return 9;
+}
+int Tetris::renderinfortext()
+{
+            clean1();
+            SDL_Event e;
+			infortext = Util.loadTexture("res/demo image/INFOR-MINECRAFT.png",Util.renderer); 
+				SDL_RenderCopy(Util.renderer, infortext, NULL, NULL); 
+                SDL_DestroyTexture(infortext);
+				SDL_RenderPresent(Util.renderer); 
+				while (SDL_WaitEvent(&e)) {
+					switch(e.type) {
+						case SDL_QUIT: 
+							return 0; 
+						case SDL_KEYDOWN: 
+							switch(e.key.keysym.sym) {
+								case SDLK_ESCAPE: return 0; 
+								case SDLK_h: 
+
+                                    return 1;
+							}
+					}
+				}
+		
+}
+int Tetris::renderrecord()
+{
+            clean1();
+            SDL_Event e;
+			int *add=new int [3];
+                recordboard = Util.loadTexture("res/demo image/bgrecord.png",Util.renderer); 
+				SDL_RenderCopy(Util.renderer, recordboard, NULL, NULL); 
+                SDL_DestroyTexture(recordboard);
+                recordboard = Util.Text("Level 1",80,410,Util.renderer,"res/font/EvilEmpire-4BBVK.ttf",{255,255,255},30,dRects);
+                SDL_RenderCopy(Util.renderer, recordboard, NULL, &dRects); 
+                SDL_DestroyTexture(recordboard);
+                recordboard = Util.Text("Level 2",80,490,Util.renderer,"res/font/EvilEmpire-4BBVK.ttf",{255,255,255},30,dRects);
+                SDL_RenderCopy(Util.renderer, recordboard, NULL, &dRects); 
+                SDL_DestroyTexture(recordboard);
+                recordboard = Util.Text("Level 3",80,570,Util.renderer,"res/font/EvilEmpire-4BBVK.ttf",{255,255,255},30,dRects);
+                SDL_RenderCopy(Util.renderer, recordboard, NULL, &dRects); 
+                SDL_DestroyTexture(recordboard);
+				for(int i=0;i<3;i++)
+				{
+					if(a[i]==0) add[i]=25;
+				if(a[i]>100) add[i]=10;
+				if(a[i]>1000) add[i]=0;
+				if(a[i]>10000) add[i]=-10;
+				}
+                recordboard = Util.Text(to_string(a[0]),270+add[0],410,Util.renderer,"res/font/font.ttf",{255,255,255},30,dRects);
+                SDL_RenderCopy(Util.renderer, recordboard, NULL, &dRects); 
+                SDL_DestroyTexture(recordboard);
+                recordboard = Util.Text(to_string(a[1]),270+add[1],490,Util.renderer,"res/font/font.ttf",{255,255,255},30,dRects);
+                SDL_RenderCopy(Util.renderer, recordboard, NULL, &dRects); 
+                SDL_DestroyTexture(recordboard);
+                recordboard = Util.Text(to_string(a[2]),270+add[2],570,Util.renderer,"res/font/font.ttf",{255,255,255},30,dRects);
+                SDL_RenderCopy(Util.renderer, recordboard, NULL, &dRects); 
+                SDL_DestroyTexture(recordboard);
+                recordboard = Util.Text(recordname[0],405,420,Util.renderer,"res/font/Pixellettersfull-BnJ5.ttf",{255,255,255},30,dRects);
+                SDL_RenderCopy(Util.renderer, recordboard, NULL, &dRects); 
+                SDL_DestroyTexture(recordboard);
+                recordboard = Util.Text(recordname[1],405,500,Util.renderer,"res/font/Pixellettersfull-BnJ5.ttf",{255,255,255},30,dRects);
+                SDL_RenderCopy(Util.renderer, recordboard, NULL, &dRects); 
+                SDL_DestroyTexture(recordboard);
+                recordboard = Util.Text(recordname[2],405,580,Util.renderer,"res/font/Pixellettersfull-BnJ5.ttf",{255,255,255},30,dRects);
+                SDL_RenderCopy(Util.renderer, recordboard, NULL, &dRects); 
+                SDL_DestroyTexture(recordboard);
+				recordboard = Util.Text("Press H to go back",30,90,Util.renderer,"res/font/font.ttf",{0,0,0},30,dRects);
+                SDL_RenderCopy(Util.renderer, recordboard, NULL, &dRects); 
+                SDL_DestroyTexture(recordboard);
+				SDL_RenderPresent(Util.renderer); 
+                delete [] add;
+				while (SDL_WaitEvent(&e)) {
+					switch(e.type) {
+						case SDL_QUIT: 
+							return 0; 
+						case SDL_KEYDOWN: 
+							switch(e.key.keysym.sym) {
+								case SDLK_ESCAPE: return 0; 
+								case SDLK_h: 
+                                    return 1;
+							}
+					}
+				}
+		
 }

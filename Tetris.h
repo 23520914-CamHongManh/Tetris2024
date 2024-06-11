@@ -4,6 +4,7 @@
 #define changelevel 1
 #define inforcheck 2
 #define switchmusic 3
+#define cupblack 4
 #include "Util.h"
 #include "Tetrimino.cpp"
     typedef struct 
@@ -22,10 +23,6 @@ private:
     SDL_Texture* lv1 = NULL;
     SDL_Texture* lv2 = NULL;
     SDL_Texture* lv3 = NULL;
-    // SDL_Texture* lv1_light = NULL;
-    // SDL_Texture* lv2_light = NULL;
-    // SDL_Texture* lv3_light = NULL;
-    // SDL_Texture* gameover_background= NULL;
     SDL_Texture* gamebg= NULL;
     SDL_Texture* next=NULL;
     SDL_Texture* score1= NULL;
@@ -48,12 +45,13 @@ private:
     SDL_Texture* nameframe=NULL;
     SDL_Texture* cup=NULL;
     SDL_Texture* name=NULL;
+    SDL_Texture* infortext=NULL;
+    SDL_Texture* recordboard=NULL;
+    SDL_Texture* cupdark=NULL;
     SDL_Rect sRect = {0, 0, 10, 10}, dRect = {0, 0, blockW, blockH};
-    // SDL_Rect dRect_score_frame = {5, 5, blockW*4, blockH*4};
-    SDL_Rect sRectbg={0,0,320,640};
+     SDL_Rect sRectbg={0,0,320,640};
     SDL_Rect dRectbg={blockW,SCREEN_HEIGHT - (line + 1)*blockH,blockW*10,blockH*20};
     SDL_Rect sRectbd={0,0,200,20};
-    // SDL_Rect dRectbd={blockW,SCREEN_HEIGHT - (line + 2)*blockH+10,blockW*10,20};
     SDL_Rect dRectbdf={blockW,SCREEN_HEIGHT - (line - 19)*blockH,blockW*10,20};
     SDL_Rect sRectbd1={0,0,20,440};
     SDL_Rect dRectbd1={10,SCREEN_HEIGHT - (line + 1)*blockH,20,blockH*21-10};
@@ -61,10 +59,8 @@ private:
     SDL_Rect playRect = {250, 263, 94, 53};
     SDL_Rect levelRect = {300, 351, 174, 53};
     SDL_Rect sRectmu = {0, 0, 32, 32};
-    // 	TextureManager::SetPos(pos_menu[MUSIC], Vector2D(42, 15), Vector2D(32, 32)); 
     SDL_Rect dRectmu = {20, 20, 40, 40};
     SDL_Rect sRectin = {64, 0, 64, 64};
-        // TextureManager::SetPos(pos_menu[INFOR], Vector2D(570, 190), Vector2D(64, 64)); 
     SDL_Rect dRectin = {230, 600, 50, 50};
     SDL_Rect sRectnext = {8, 365, 403, 347};
     SDL_Rect dRectnext = {blockW*12, blockH*16+30, 230, 178};
@@ -83,13 +79,16 @@ private:
     SDL_Rect dnamef={320, 170, 196, 56};
     SDL_Rect dname={0,0,0,0};
     SDL_Rect dcup={520, 590, 70, 70};
-    bool Checkmouse[4]={0,0,0,0};
+    bool Checkmouse[5]={0,0,0,0,0};
     bool running = false;
+    bool space= false;
+    unsigned int delay1 = 0;
     int level = 1;
     int score = 0;
     int highestscore=0;
     int highestscore1=0;
     int a[3];
+    string recordname[3];
     int field[line+1][col] = {{0}};
     point backup[4];
     point temp[2][4];
@@ -101,7 +100,6 @@ private:
     Uint32 currentTime = 0, lastTime = 0;
     int color[2] = {1,1};
     string namep="Your name...";
-    //  theme_music; 
 public:
     Tetris() {ter=new Tetrimino*[2];}
     ~Tetris();
@@ -136,7 +134,8 @@ public:
     void renderstartgame();
     int endgame();
     void rendername();
+    int renderinfortext();
+    int renderrecord();
+    void updateexplode();
 };
-// int a=1;
-// #define SDL_CreateThread(Tetris::MouseGame(), "EventThread", (void*)a)  threadID
 #endif //TETRIS_H

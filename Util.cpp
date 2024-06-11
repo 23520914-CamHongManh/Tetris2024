@@ -26,7 +26,6 @@ void util::initSDL(SDL_Window* &window, SDL_Renderer* &renderer)
 void util::quitSDL()
 {
 SDL_DestroyRenderer(renderer);
-// SDL_DestroyTexture(Tex);
 SDL_DestroyWindow(window);
 	TTF_Quit();
 	IMG_Quit(); 
@@ -93,14 +92,14 @@ void util::effectAudio(const char* nameSong,int vol)
         Mix_PlayChannel(-1, chunk, 0);
 }
 
-SDL_Texture* util::Text(string text, int x, int y, SDL_Renderer* renderer, SDL_Color color,int size,SDL_Rect &dRect)
+SDL_Texture* util::Text(string text, int x, int y, SDL_Renderer* renderer,const char* fonttype, SDL_Color color,int size,SDL_Rect &dRect)
 {
     if (TTF_Init() < 0)
     {
 	SDL_Log("%s", TTF_GetError());
     }
     TTF_Font* font = NULL;
-    font = TTF_OpenFont("res/font/font.ttf", size);
+    font = TTF_OpenFont(fonttype, size);
     //SDL_Color fg = { 240, 66, 225 };
     SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), color);
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);

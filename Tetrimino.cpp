@@ -1,14 +1,4 @@
 #ifndef _Ter_H
-// const int Tetris::figure[7][4] =
-// {
-//     0, 1, 2, 3, // I
-//     0, 1, 5, 6, // Z
-//     0, 4, 5, 6, // J
-//     2, 6, 5, 4, // L
-//     1, 2, 5, 6, // O
-//     2, 1, 5, 4, // S
-//     1, 4, 5, 6  // T
-// };
 class Tetrimino
 {
     protected:

@@ -1,26 +1,9 @@
 #include "Tetris.h"
-// #include <thread>
-/*
- 0 1 2 3
- 4 5 6 7 */
-
-// const int Tetris::figure[7][4] =
-// {
-//     0, 1, 2, 3, // I
-//     0, 1, 5, 6, // Z
-//     0, 4, 5, 6, // J
-//     2, 6, 5, 4, // L
-//     1, 2, 5, 6, // O
-//     2, 1, 5, 4, // S
-//     1, 4, 5, 6  // T
-// };
 
 bool Tetris::init()
 {
     Util.initSDL(Util.window, Util.renderer);
     SDL_SetRenderDrawColor(Util.renderer, 255, 255, 255, 255);
-    //Util.backgroundAudio("Background.wav");
-    nextTetromino();
     return true;
 }
 
@@ -69,18 +52,25 @@ void Tetris::Event()
             case SDLK_e :
                 {
                     rotater = true;
-                    Util.effectAudio("res/audio/music/rotate.wav",50);
+                    Util.effectAudio("res/audio/music/rotate.wav",40);
                     break;
                 }
                 case SDLK_q :
                 {
                     rotatel = true;
-                    Util.effectAudio("res/audio/music/rotate.wav",50);
+                    Util.effectAudio("res/audio/music/rotate.wav",40);
                     break;
                 }
             case SDLK_DOWN :
                 {
                     delay = 0;
+                    space=0;
+                    break;
+                }
+                case SDLK_SPACE :
+                {
+                    delay=0;
+                    space=1;
                     break;
                 }
                 case  SDLK_ESCAPE: {
@@ -131,7 +121,6 @@ void Tetris::Event()
                         }
                     }
                    }
-            // if(!SDL_PollEvent(&e)) break;
         }
     }
 
@@ -163,17 +152,6 @@ bool Tetris::collision1()
     }
     return true;
 }
-// bool Tetris::collision2()
-// {
-//     for(int i = 0; i < 4; i++)
-//     {
-//         if(temp[0][i].x < 0|| temp[0][i].x >=col||temp[0][i].y >= line)   //va cham vs field
-//             return false;
-//         else if(field[temp[0][i].y][temp[0][i].x])  //va cham vs block
-//             return false;
-//     }
-//     return true;
-// }
 void Tetris::fixcollision()
 {
     for(int i = 0; i < 4; i++)
@@ -217,7 +195,6 @@ void Tetris::nextTetromino()
         case 7:ter[1]=new TerO();break;
         default: break;
     }
-    // int b = rand()%7;
 }
 void Tetris::updatetemp()
 {
@@ -237,20 +214,11 @@ void Tetris::updatetemp()
     delete c;
     delete b;
 }
-// void Tetris::swaptemp()
-// {
-//     for(int i=0;i<2;i++)
-//     {
-//         point t=temp[0][i];
-//         temp[0][i]=temp[0][3-i];
-//         temp[0][3-i]=t;
-//     }
-// }
 void Tetris::game()
 {
     //backup
     for(int i = 0; i < 4; i++)
-        backup[i] = temp[0][i];   // save block khi va cham
+        backup[i] = temp[0][i];   
     // move
     for(int i = 0; i < 4; i++)
     {
@@ -261,7 +229,7 @@ void Tetris::game()
             for(int i = 0; i < 4; i++)
                 temp[0][i] = backup[i];
         }
-    //rotater
+    //rotate right
     if(rotater)
     {
         int z=ter[0]->getloai();
@@ -284,7 +252,6 @@ void Tetris::game()
         {
             int x = temp[0][i].y - p.y;
             int y = temp[0][i].x - p.x;
-            // cout<<x1<<" "<<y1<<endl;
             temp[0][i].x = p.x - x + x1;
             temp[0][i].y = p.y + y + y1;
         }
@@ -295,9 +262,8 @@ void Tetris::game()
             for(int i = 0; i < 4; i++)
                 temp[0][i] = backup[i];
         }
-        // else if(ter[0]->getloai()==1) swaptemp();
     }
-    //rotatel
+    //rotate left
     if(rotatel)
     {
         int z=ter[0]->getloai();
@@ -344,6 +310,16 @@ void Tetris::game()
         {
             for(int i = 0; i < 4; i++)
                 field[backup[i].y][backup[i].x] = color[0];// save mau o cuoi line
+                // thoi gian delay giua cac lan blocks roi
+                if(level == 1)
+                    delay = ((400-score/10)>300)? (400-score/10):300;
+                else if(level == 2)
+                    delay = ((300-score/10)>150)? (300-score/10):140;
+                else if(level == 3)
+                    delay = 70+rand()%180;
+                delay1=delay;
+                for(int i = 0; i < 4; i++)
+                    backup[i] = temp[1][i];   
                 Tetrimino *p=ter[0];
                 ter[0]=ter[1];
                 delete p;
@@ -355,17 +331,16 @@ void Tetris::game()
     move = 0;
     rotater = false;
     rotatel=false;
-    if(level == 1)
-        delay = ((400-score/10)>300)? (400-score/10):300;
-    else if(level == 2)
-        delay = ((300-score/10)>200)? (300-score/10):200;
-    else if(level == 3)
-        delay = ((250-score/10)>120)? (250-score/10):120;
+    if(!space) 
+    {
+        delay=delay1;
+    }
 }
 
-void Tetris::checkline()
+void Tetris::checkline() // kiem tra xem dong co day khong
 {
     int n = line;
+    int bonus=0;
     for(int i = n; i > 0; i--)
     {
         int count = 0;
@@ -379,27 +354,47 @@ void Tetris::checkline()
             n--;
         if(count == col)
         {
-            // Util.effectAudio("res/audio/music/metal hit.wav",90);
+            bonus++;
             renderexplode(i);
-            score += 100;
-            if(highestscore<score) highestscore=score;
+    }
+    }
+    if(bonus){
+        int tempscore=score+(bonus-1)*50;
+        for(;score<tempscore;)
+        {
+            score+=10;
             string text = to_string(score);
-            string text1= to_string(highestscore);
+            SDL_DestroyTexture(scorenum);
             if(score < 1000){
-                scorenum=Util.Text(text, blockW*12+83, blockH*3+80, Util.renderer, { 255, 255, 255 },50,dRects);
-                highnum=Util.Text(text1, blockW*12+83, blockH*9+115, Util.renderer, { 255, 255, 255 },50,dRecths);
+                if(score==0) scorenum=Util.Text(text, blockW*12+105, blockH*3+80, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRects);
+                else scorenum=Util.Text(text, blockW*12+83, blockH*3+80, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRects);
             }
             else if(score < 10000){
-                scorenum=Util.Text(text, blockW*12+70, blockH*3+80, Util.renderer, { 255, 255, 255 },50,dRects);
-                highnum=Util.Text(text1, blockW*12+70, blockH*9+115, Util.renderer, { 255, 255, 255 },50,dRecths);
+                scorenum=Util.Text(text, blockW*12+70, blockH*3+80, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRects);
         }
         else
         {
-            scorenum=Util.Text(text, blockW*12+57, blockH*3+80, Util.renderer, { 255, 255, 255 },50,dRects);
-                highnum=Util.Text(text1, blockW*12+57, blockH*9+115, Util.renderer, { 255, 255, 255 },50,dRecths);
+            scorenum=Util.Text(text, blockW*12+57, blockH*3+80, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRects);
         }
+        updateexplode();
+        SDL_Delay(10);
         }
     }
+    if(highestscore<score){ 
+            highestscore=score;
+            SDL_DestroyTexture(highnum);
+            string text1= to_string(highestscore);
+                    if(highestscore < 1000){
+                        highnum=Util.Text(text1, blockW*12+83, blockH*9+115, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRecths);
+                    }
+                    else if(highestscore < 10000){
+                        highnum=Util.Text(text1, blockW*12+70, blockH*9+115, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRecths);
+                }
+                else
+                {
+                    highnum=Util.Text(text1, blockW*12+57, blockH*9+115, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRecths);
+                }
+            }
 }
 
 void Tetris::gameOver()
@@ -430,11 +425,13 @@ void Tetris::gameOver()
                 case 2:
                 case 3:
                 a[level-1]=highestscore;
+                recordname[level-1]=namep;
                 break;
             }
             for(int i=0;i<3;i++)
             {
-                p<<a[i]<<" ";
+                p<<a[i]<<endl;
+                p<<recordname[i]<<endl;
             }
             p.close();
         }
@@ -443,7 +440,6 @@ void Tetris::gameOver()
 void Tetris::SetupGame()
 {
     gamebg=Util.loadTexture("res/demo image/bg.png",Util.renderer);
-    // Util.backgroundAudio("res/audio/music/HQ _ Fish-Man Island Stage Theme (SoundTrack) - One Piece Bounty Rush.mp3",30);
     background = Util.loadTexture("res/demo image/stone-wall1.png", Util.renderer);
     block = Util.loadTexture("res/demo image/minecraft.png", Util.renderer);
     next = Util.loadTexture("res/demo image/minecraft-inventory.webp", Util.renderer);
@@ -458,23 +454,30 @@ void Tetris::SetupGame()
     replay=Util.loadTexture("res/demo image/replay.png",Util.renderer);
     remenu=Util.loadTexture("res/demo image/menuback.png",Util.renderer);
     explode=Util.loadTexture("res/demo image/explode.png",Util.renderer);
+    music =Util.loadTexture("res/gfx/Button/music.png",Util.renderer);
     dRectmu = {blockW*17,20,50,50};
     nextTetromino();
     ter[0]=ter[1];
     nextTetromino();
     updatetemp();
-    // if(score == 0)
-    // {
-    //     scorenum=Util.Text("0", blockW*12+105, blockH*3+80, Util.renderer, { 255, 255, 255 },50,dRects);
-    //     // SDL_RenderCopy(Util.renderer, Util.Tex, &Util.srcRest, &Util.desRect);
-    // }
-    scorenum=Util.Text(to_string(score), blockW*12+105, blockH*3+80, Util.renderer, { 255, 255, 255 },50,dRects);
-    scoretex=Util.Text("Your score", blockW*12+35, blockH*3+20, Util.renderer, { 255, 255, 255 },40,dRects1);
+        // thoi gian delay giua cac lan blocks roi
+    if(level == 1)
+        delay = 400;
+    else if(level == 2)
+        delay = 300;
+    else if(level == 3)
+        delay = 200;
+    delay1=delay;
+    scorenum=Util.Text(to_string(score), blockW*12+105, blockH*3+80, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRects);
+    scoretex=Util.Text("Your score", blockW*12+35, blockH*3+20, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },40,dRects1);
     ifstream p("Highestscore.txt");
+    string c;
     if(!p) cerr<<"Can't open file"<<endl;
     for(int i=0;i<3;i++)
     {
-        p>>a[i];
+                p>>a[i];
+				getline(p,c);
+				getline(p,recordname[i]);
     }
     switch(level)
     {
@@ -485,38 +488,22 @@ void Tetris::SetupGame()
         break;
     }
     p.close();
-    //     FILE *p=fopen("Highest Score.txt","r");
-    // int *a=new int[3];
-    // for(int i=0;i<3;i++)
-    // {
-    //     fread(&a[i],sizeof(int),1,p);
-    // }
-    // switch(level)
-    // {
-    //     case 1:
-    //     case 2:
-    //     case 3:
-    //     highestscore=a[level-1];
-    //     break;
-    // }
-    // delete a;a=NULL;
-    // fclose(p);
     highestscore1=highestscore;
-    hightex=Util.Text("Highest Score", blockW*12+15, blockH*9+45, Util.renderer, { 255, 255, 255 },40,dRecths1);
+    hightex=Util.Text("Highest Score", blockW*12+15, blockH*9+45, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },40,dRecths1);
     string text = to_string(highestscore);
     if(highestscore < 1000){
         if(highestscore == 0)
     {
-        highnum=Util.Text(text, blockW*12+105, blockH*9+115, Util.renderer, { 255, 255, 255 },50,dRecths);
+        highnum=Util.Text(text, blockW*12+105, blockH*9+115, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRecths);
         // SDL_RenderCopy(Util.renderer, Util.Tex, &Util.srcRest, &Util.desRect);
     }
-               else highnum=Util.Text(text, blockW*12+83, blockH*9+115, Util.renderer, { 255, 255, 255 },50,dRecths);
+               else highnum=Util.Text(text, blockW*12+83, blockH*9+115, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRecths);
     }
             else if(highestscore < 10000)
-                highnum=Util.Text(text, blockW*12+70, blockH*9+115, Util.renderer, { 255, 255, 255 },50,dRecths);
+                highnum=Util.Text(text, blockW*12+70, blockH*9+115, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRecths);
                 else
         {
-                highnum=Util.Text(text, blockW*12+57, blockH*9+115, Util.renderer, { 255, 255, 255 },50,dRecths);
+                highnum=Util.Text(text, blockW*12+57, blockH*9+115, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRecths);
         }
 
 }
@@ -524,11 +511,9 @@ void Tetris::updateRenderer()
 {
     SDL_RenderClear(Util.renderer);
     SDL_RenderCopy(Util.renderer, background, NULL, NULL);
-    // SDL_RenderCopy(Util.renderer, score_frame, NULL, &dRect_score_frame);
     SDL_RenderCopy(Util.renderer, gamebg, &sRectbg, &dRectbg);
     SDL_RenderCopy(Util.renderer, border1, &sRectbd1, &dRectbd1);
     SDL_RenderCopy(Util.renderer, border1, &sRectbd1, &dRectbd1f);
-    // SDL_RenderCopy(Util.renderer, border, &sRectbd, &dRectbd);
     SDL_RenderCopy(Util.renderer, border, &sRectbd, &dRectbdf);
     SDL_RenderCopy(Util.renderer, next, &sRectnext, &dRectnext);
     SDL_RenderCopy(Util.renderer, score1, NULL, &dRectscore);
@@ -539,8 +524,6 @@ void Tetris::updateRenderer()
     SDL_RenderCopy(Util.renderer, hightex, NULL, &dRecths1);
     SDL_RenderCopy(Util.renderer,music,&sRectmu,&dRectmu);
     SDL_RenderCopy(Util.renderer,pauseb,NULL,&dpause);
-    // string text = to_string(highestscore);
-    // Util.Text(text, blockW*12+100, blockH*9+40, Util.renderer, { 255, 255, 255 },50);
     // va cham vs day ( luu hinh anh cuoi cung khi o day - bao gom ca mau sac)
     for(int i = 0; i < line+1; i++)
     {
@@ -674,20 +657,21 @@ void Tetris::reset()
             field[i][j] = 0;
         }
     }
-    if(score<=highestscore1) scoretex=Util.Text("Awesome!", 160, 100, Util.renderer, { 255, 255, 255 },80,dRects1);
-    else scoretex=Util.Text("New Record!!!", 110, 100, Util.renderer, { 255, 255, 255 },80,dRects1);
+    SDL_DestroyTexture(scoretex);
+    if(score<=highestscore1) scoretex=Util.Text("Awesome!", 160, 100, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },80,dRects1);
+    else scoretex=Util.Text("New Record!!!", 110, 100, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },80,dRects1);
+    SDL_DestroyTexture(scorenum);
     string text = to_string(score);
         if(score < 1000){
-                if(score==0)  scorenum=Util.Text(text, 280, 250, Util.renderer, { 255, 255, 255 },70,dRects);
-                else scorenum=Util.Text(text, 250, 250, Util.renderer, { 255, 255, 255 },70,dRects);          }
+                if(score==0)  scorenum=Util.Text(text, 280, 250, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },70,dRects);
+                else scorenum=Util.Text(text, 250, 250, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },70,dRects);          }
             else if(score < 10000){
-                scorenum=Util.Text(text, 235, 250, Util.renderer, { 255, 255, 255 },70,dRects);        }
+                scorenum=Util.Text(text, 235, 250, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },70,dRects);        }
         else
         {
-            scorenum=Util.Text(text, 220, 250, Util.renderer, { 255, 255, 255 },70,dRects);        }
+            scorenum=Util.Text(text, 220, 250, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },70,dRects);        }
     score=0;
     dRectmu = {20, 20, 40, 40};
-    //SDL_RenderCopy(Util.renderer, background, NULL, NULL);
 }
 int Tetris::endgame()
 {
@@ -735,17 +719,11 @@ int Tetris::endgame()
      }
 
 }
-void Tetris::clean() // chong tran bo nho
+void Tetris::clean() // chong tran bo nho cho che do choi
 {
     SDL_DestroyTexture(background);
     SDL_DestroyTexture(gamebg);
     SDL_DestroyTexture(block);
-    // SDL_DestroyTexture(backgroundMenu);
-    // SDL_DestroyTexture(play);
-    // SDL_DestroyTexture(play_light);
-    // SDL_DestroyTexture(lv1);
-    // SDL_DestroyTexture(lv2);
-    // SDL_DestroyTexture(lv3);
     SDL_DestroyTexture(border);
     SDL_DestroyTexture(border1);
     SDL_DestroyTexture(dispender);
@@ -763,29 +741,21 @@ void Tetris::clean() // chong tran bo nho
      SDL_DestroyTexture(replay);
      SDL_DestroyTexture(remenu);
      SDL_DestroyTexture(explode);
-    // SDL_DestroyTexture(infor);
-    // SDL_DestroyTexture(lv1_light);
-    // SDL_DestroyTexture(lv2_light);
-    // SDL_DestroyTexture(lv3_light);
 }
-void Tetris::clean1() // chong tran bo nho
+void Tetris::clean1() // chong tran bo nho cho menu
 {
-    // SDL_DestroyTexture(background);
-    // SDL_DestroyTexture(gamebg);
-    // SDL_DestroyTexture(block);
     SDL_DestroyTexture(backgroundMenu);
     SDL_DestroyTexture(play);
     SDL_DestroyTexture(play_light);
     SDL_DestroyTexture(lv1);
     SDL_DestroyTexture(lv2);
     SDL_DestroyTexture(lv3);
-    // SDL_DestroyTexture(border);
-    // SDL_DestroyTexture(border1);
-    // SDL_DestroyTexture(dispender);
     SDL_DestroyTexture(infor);
-    // SDL_DestroyTexture(lv1_light);
-    // SDL_DestroyTexture(lv2_light);
-    // SDL_DestroyTexture(lv3_light);
+    SDL_DestroyTexture(nameframe);
+    SDL_DestroyTexture(name);
+    SDL_DestroyTexture(cupdark);
+    SDL_DestroyTexture(cup);
+    SDL_DestroyTexture(music);
 }
 Tetris::~Tetris()
 {
@@ -796,8 +766,6 @@ Tetris::~Tetris()
 }
 void Tetris::renderexplode(int n)
 {
-    // ter[0]=ter[1];
-    // nextTetromino();
     Util.effectAudio("res/audio/music/explode.wav",90);
         for(int j = 0; j < col; j++)
         {
@@ -806,7 +774,25 @@ void Tetris::renderexplode(int n)
                 SDL_RenderCopy(Util.renderer, explode, NULL, &dexplode);
         }
         SDL_RenderPresent(Util.renderer);
-        SDL_Delay(100);
+        for(int i=0;i<10;i++)
+        {
+            score += 10;
+            string text = to_string(score);
+            SDL_DestroyTexture(scorenum);
+            if(score < 1000){
+                if(score==0) scorenum=Util.Text(text, blockW*12+105, blockH*3+80, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRects);
+                else scorenum=Util.Text(text, blockW*12+83, blockH*3+80, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRects);
+            }
+            else if(score < 10000){
+                scorenum=Util.Text(text, blockW*12+70, blockH*3+80, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRects);
+        }
+        else
+        {
+            scorenum=Util.Text(text, blockW*12+57, blockH*3+80, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRects);
+        }
+            updateexplode();
+            SDL_Delay(10);
+        }
         for(int j = 0; j < col; j++)
         {
                 tetromino(dexplode, j*blockW, n*blockH,blockW,blockH);
@@ -814,7 +800,7 @@ void Tetris::renderexplode(int n)
                 SDL_RenderCopy(Util.renderer, explode, NULL, &dexplode);
         }
         SDL_RenderPresent(Util.renderer);
-        SDL_Delay(100);
+        SDL_Delay(80);
         for(int j = 0; j < col; j++)
         {
                 tetromino(dexplode, j*blockW, n*blockH,blockW+10,blockH+10);
@@ -822,48 +808,11 @@ void Tetris::renderexplode(int n)
                 SDL_RenderCopy(Util.renderer, explode, NULL, &dexplode);
         }
         SDL_RenderPresent(Util.renderer);
-        SDL_Delay(100);
+        SDL_Delay(80);
 }
 void Tetris::renderstartgame()
 {
     Util.pause();
-
-    // Util.effectAudio("res/audio/music/Go!!!.wav",100);
-    // for(int i=0;i<4;i++)
-    // {
-    //     SDL_RenderClear(Util.renderer);
-    //     SDL_RenderCopy(Util.renderer, background, NULL, NULL);
-    //     SDL_RenderCopy(Util.renderer, gamebg, &sRectbg, &dRectbg);
-    //     SDL_RenderCopy(Util.renderer, border1, &sRectbd1, &dRectbd1);
-    //     SDL_RenderCopy(Util.renderer, border1, &sRectbd1, &dRectbd1f);
-    //     SDL_RenderCopy(Util.renderer, border, &sRectbd, &dRectbdf);
-    //     SDL_RenderCopy(Util.renderer, next, &sRectnext, &dRectnext);
-    //     SDL_RenderCopy(Util.renderer, score1, NULL, &dRectscore);
-    //     SDL_RenderCopy(Util.renderer, high, &sRecthigh, &dRecthigh);
-    //     // SDL_RenderCopy(Util.renderer, scorenum, NULL, &dRects);
-    //     SDL_RenderCopy(Util.renderer, scoretex, NULL, &dRects1);
-    //     // SDL_RenderCopy(Util.renderer, highnum, NULL, &dRecths);
-    //     SDL_RenderCopy(Util.renderer, hightex, NULL, &dRecths1);
-    //     SDL_RenderCopy(Util.renderer,music,&sRectmu,&dRectmu);
-    //     SDL_RenderCopy(Util.renderer,pauseb,NULL,&dpause);
-    //     SDL_RenderCopy(Util.renderer,pausebg,NULL,NULL);
-    //     SDL_RenderCopy(Util.renderer,pausebg,NULL,NULL);
-    //     SDL_RenderCopy(Util.renderer,pausebg,NULL,NULL);
-    //     if(i!=3)
-    //     {
-    //         scorenum=Util.Text(to_string(i+1),290,300,Util.renderer,{255,255,255},110,dRects);
-    //     SDL_RenderCopy(Util.renderer,scorenum,NULL,&dRects);
-    //     SDL_RenderPresent(Util.renderer);
-    //     SDL_Delay(600);
-    //     }
-    //     else
-    //     {
-    //         scorenum=Util.Text("Go!!!",230,290,Util.renderer,{255,255,255},130,dRects);
-    //     SDL_RenderCopy(Util.renderer,scorenum,NULL,&dRects);
-    //     SDL_RenderPresent(Util.renderer);
-    //     SDL_Delay(900);
-    //     }
-    // }
     SDL_RenderClear(Util.renderer);
         SDL_RenderCopy(Util.renderer, background, NULL, NULL);
         SDL_RenderCopy(Util.renderer, gamebg, &sRectbg, &dRectbg);
@@ -872,9 +821,7 @@ void Tetris::renderstartgame()
         SDL_RenderCopy(Util.renderer, border, &sRectbd, &dRectbdf);
         SDL_RenderCopy(Util.renderer, score1, NULL, &dRectscore);
         SDL_RenderCopy(Util.renderer, high, &sRecthigh, &dRecthigh);
-        // SDL_RenderCopy(Util.renderer, scorenum, NULL, &dRects);
         SDL_RenderCopy(Util.renderer, scoretex, NULL, &dRects1);
-        // SDL_RenderCopy(Util.renderer, highnum, NULL, &dRecths);
         SDL_RenderCopy(Util.renderer, hightex, NULL, &dRecths1);
         SDL_RenderCopy(Util.renderer,music,&sRectmu,&dRectmu);
         SDL_RenderCopy(Util.renderer,pauseb,NULL,&dpause);
@@ -924,7 +871,8 @@ void Tetris::renderstartgame()
         updateField(dRect, blockW*12+11, blockH*19+4);
         SDL_RenderCopy(Util.renderer, block, &sRect, &dRect);
     }
-        scorenum=Util.Text("Go!!!",230,290,Util.renderer,{255,255,255},130,dRects);
+        SDL_DestroyTexture(scorenum);
+        scorenum=Util.Text("Go!!!",230,290,Util.renderer,"res/font/font.ttf",{255,255,255},130,dRects);
         SDL_RenderPresent(Util.renderer);
         SDL_Delay(600);
         Util.effectAudio("res/audio/music/go.wav",100);
@@ -933,10 +881,115 @@ void Tetris::renderstartgame()
         SDL_RenderPresent(Util.renderer);
         SDL_Delay(700);
     if(Checkmouse[switchmusic]==0) Util.resume();
-    scorenum=Util.Text(to_string(score), blockW*12+105, blockH*3+80, Util.renderer, { 255, 255, 255 },50,dRects);
+    SDL_DestroyTexture(scorenum);
+    scorenum=Util.Text(to_string(score), blockW*12+105, blockH*3+80, Util.renderer, "res/font/font.ttf",{ 255, 255, 255 },50,dRects);
     Tetrimino *p=ter[0];
                 ter[0]=ter[1];
                 delete p;
             nextTetromino();
             updatetemp();
+}
+void Tetris::updateexplode()
+{
+    SDL_RenderClear(Util.renderer);
+    SDL_RenderCopy(Util.renderer, background, NULL, NULL);
+    SDL_RenderCopy(Util.renderer, gamebg, &sRectbg, &dRectbg);
+    SDL_RenderCopy(Util.renderer, border1, &sRectbd1, &dRectbd1);
+    SDL_RenderCopy(Util.renderer, border1, &sRectbd1, &dRectbd1f);
+    SDL_RenderCopy(Util.renderer, border, &sRectbd, &dRectbdf);
+    SDL_RenderCopy(Util.renderer, next, &sRectnext, &dRectnext);
+    SDL_RenderCopy(Util.renderer, score1, NULL, &dRectscore);
+    SDL_RenderCopy(Util.renderer, high, &sRecthigh, &dRecthigh);
+    SDL_RenderCopy(Util.renderer, scorenum, NULL, &dRects);
+    SDL_RenderCopy(Util.renderer, scoretex, NULL, &dRects1);
+    SDL_RenderCopy(Util.renderer, highnum, NULL, &dRecths);
+    SDL_RenderCopy(Util.renderer, hightex, NULL, &dRecths1);
+    SDL_RenderCopy(Util.renderer,music,&sRectmu,&dRectmu);
+    SDL_RenderCopy(Util.renderer,pauseb,NULL,&dpause);
+    // va cham vs day ( luu hinh anh cuoi cung khi o day - bao gom ca mau sac)
+    for(int i = 0; i < line+1; i++)
+    {
+        for(int j = 0; j < col; j++)
+        {
+            if(field[i][j]!=0)
+            {
+                int nx,ny;
+        switch(field[i][j])
+        {
+         case 1:nx= 8; ny= 3;
+            break;
+            case 2:nx= 36; ny= 3;
+            break;
+            case 3:nx= 62; ny= 3;
+            break;
+            case 4:nx= 8; ny= 31;
+            break;
+            case 5:nx= 36; ny= 31;
+            break;
+            case 6:nx= 62; ny= 31;
+            break;
+            case 7:nx= 9; ny= 60;
+            break;
+            case 8:nx= 36; ny= 60;
+            break;
+            case 9:nx= 62; ny= 60;
+            break;
+            case 10:nx= 8; ny= 87;
+            break;
+            case 11:nx= 36; ny= 87;
+            break;
+            case 12:nx= 62; ny= 87;
+            break;
+
+        }
+                tetromino(sRect, nx,ny,28,28);  // Giu nguyen mau cua block khi dang o day
+                tetromino(dRect, j*blockW, i*blockH);
+                updateField(dRect, blockW, SCREEN_HEIGHT - (line + 2)*blockH);
+                SDL_RenderCopy(Util.renderer, block, &sRect, &dRect);
+            }
+        }
+    }
+    //dispender
+    for(int i=0;i<10;i++)
+    {
+        SDL_Rect dRectdis={blockW*(1+i),SCREEN_HEIGHT - (line +2)*blockH,blockW,blockH};
+        SDL_RenderCopy(Util.renderer, dispender, NULL, &dRectdis);
+    }
+    //Tao block xem truoc
+    for(int i = 0; i < 4; i++)
+    {
+        int nx,ny;
+        switch(color[0])
+        {
+            case 1:nx= 8; ny= 3;
+            break;
+            case 2:nx= 36; ny= 3;
+            break;
+            case 3:nx= 62; ny= 3;
+            break;
+            case 4:nx= 8; ny= 31;
+            break;
+            case 5:nx= 36; ny= 31;
+            break;
+            case 6:nx= 62; ny= 31;
+            break;
+            case 7:nx= 9; ny= 60;
+            break;
+            case 8:nx= 36; ny= 60;
+            break;
+            case 9:nx= 62; ny= 60;
+            break;
+            case 10:nx= 8; ny= 87;
+            break;
+            case 11:nx= 36; ny= 87;
+            break;
+            case 12:nx= 62; ny= 87;
+            break;
+        }
+        tetromino(sRect, nx,ny,28,28);
+        tetromino(dRect, backup[i].x *53, backup[i].y*55,blockW+15,blockH+15);
+        updateField(dRect, blockW*12+11, blockH*19+4);
+        SDL_RenderCopy(Util.renderer, block, &sRect, &dRect);
+    }
+    SDL_RenderPresent(Util.renderer);
 }
